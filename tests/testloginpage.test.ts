@@ -5,7 +5,12 @@ test("Navigate to login page", async ({ page }) => {
   const loginPage = new LoginPage(page);
 
   await loginPage.goto();
-  await loginPage.expectLoaded();
-
   await expect(page).toHaveTitle("Swag Labs");
+});
+
+test("Verify elements loaded", async ({ page }) => {
+  const loginPage = new LoginPage(page);
+
+  await loginPage.goto();
+  await loginPage.expectLoaded();
 });
