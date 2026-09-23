@@ -21,6 +21,9 @@ test('user can login with credentials from env', async ({ page }) => {
   // Do not log or print credentials anywhere — use them directly.
   await loginPage.loginWithCredentials(username, password);
 
-  // Verify successful login by checking an element on the inventory page.
+  // Verify successful login by checking elements on the inventory page.
+  await expect(page).toHaveURL(/.*inventory.html/);
   await expect(page.locator('#inventory_container')).toBeVisible();
+  // Ensure at least one inventory item is shown after login.
+  await expect(page.locator('.inventory_item').first()).toBeVisible();
 });
