@@ -8,6 +8,7 @@ import path from "path";
  * https://github.com/motdotla/dotenv
  */
 dotenv.config({ path: path.resolve(__dirname, ".env") });
+//this is to ignore the .env file in the root directory, and use the .env file in the config directory instead
 
 /**
  * See https://playwright.dev/docs/test-configuration.

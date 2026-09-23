@@ -1,7 +1,8 @@
 
 # Playwright
 node_modules/
-.env
+#.env
+#This is to ignore the .env file in the root directory, and use the .env file in the config directory instead
 /test-results/
 /playwright-report/
 /blob-report/
