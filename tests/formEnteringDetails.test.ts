@@ -49,3 +49,32 @@ test("does not submit the practice form with an invalid mobile number", async ({
     page.getByRole("dialog", { name: "Thanks for submitting the form" }),
   ).toHaveCount(0);
 });
+
+test("shows validation errors for all required fields when submitted empty", async ({
+  page,
+}) => {
+  await page.goto("https://demoqa.com/automation-practice-form");
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  const requiredFields = [
+    page.locator("#firstName"),
+    page.locator("#lastName"),
+    page.locator('input[name="gender"]').first(),
+    page.locator("#userNumber"),
+  ];
+
+  for (const field of requiredFields) {
+    await expect
+      .poll(() => field.evaluate((input: HTMLInputElement) => input.validity.valid))
+      .toBe(false);
+    await expect
+      .poll(() =>
+        field.evaluate((input: HTMLInputElement) => input.validationMessage),
+      )
+      .not.toBe("");
+  }
+
+  await expect(
+    page.getByRole("dialog", { name: "Thanks for submitting the form" }),
+  ).toHaveCount(0);
+});
