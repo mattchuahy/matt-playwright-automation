@@ -31,3 +31,21 @@ test("submits the practice form with student details", async ({ page }) => {
     ).toBeVisible();
   }
 });
+
+test("does not submit the practice form with an invalid mobile number", async ({
+  page,
+}) => {
+  await page.goto("https://demoqa.com/automation-practice-form");
+
+  await page.locator("#firstName").fill("Alex");
+  await page.locator("#lastName").fill("Morgan");
+  await page.getByText("Male", { exact: true }).click();
+  await page.locator("#userNumber").fill("12345");
+
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  await expect(page.locator("#userNumber:invalid")).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "Thanks for submitting the form" }),
+  ).toHaveCount(0);
+});
