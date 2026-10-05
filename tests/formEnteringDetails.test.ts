@@ -1,0 +1,80 @@
+import { expect, test } from "@playwright/test";
+
+test("submits the practice form with student details", async ({ page }) => {
+  await page.goto("https://demoqa.com/automation-practice-form");
+
+  await page.locator("#firstName").fill("Alex");
+  await page.locator("#lastName").fill("Morgan");
+  await page.locator("#userEmail").fill("alex.morgan@example.com");
+  await page.getByText("Male", { exact: true }).click();
+  await page.locator("#userNumber").fill("1234567890");
+  await page.getByText("Sports", { exact: true }).click();
+  await page.locator("#currentAddress").fill("123 Test Street");
+
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  const confirmationDialog = page.getByRole("dialog", {
+    name: "Thanks for submitting the form",
+  });
+
+  await expect(confirmationDialog).toBeVisible();
+  for (const detailsRow of [
+    "Student Name Alex Morgan",
+    "Student Email alex.morgan@example.com",
+    "Gender Male",
+    "Mobile 1234567890",
+    "Hobbies Sports",
+    "Address 123 Test Street",
+  ]) {
+    await expect(
+      confirmationDialog.getByRole("row", { name: detailsRow }),
+    ).toBeVisible();
+  }
+});
+
+test("does not submit the practice form with an invalid mobile number", async ({
+  page,
+}) => {
+  await page.goto("https://demoqa.com/automation-practice-form");
+
+  await page.locator("#firstName").fill("Alex");
+  await page.locator("#lastName").fill("Morgan");
+  await page.getByText("Male", { exact: true }).click();
+  await page.locator("#userNumber").fill("12345");
+
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  await expect(page.locator("#userNumber:invalid")).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "Thanks for submitting the form" }),
+  ).toHaveCount(0);
+});
+
+test("shows validation errors for all required fields when submitted empty", async ({
+  page,
+}) => {
+  await page.goto("https://demoqa.com/automation-practice-form");
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  const requiredFields = [
+    page.locator("#firstName"),
+    page.locator("#lastName"),
+    page.locator('input[name="gender"]').first(),
+    page.locator("#userNumber"),
+  ];
+
+  for (const field of requiredFields) {
+    await expect
+      .poll(() => field.evaluate((input: HTMLInputElement) => input.validity.valid))
+      .toBe(false);
+    await expect
+      .poll(() =>
+        field.evaluate((input: HTMLInputElement) => input.validationMessage),
+      )
+      .not.toBe("");
+  }
+
+  await expect(
+    page.getByRole("dialog", { name: "Thanks for submitting the form" }),
+  ).toHaveCount(0);
+});
