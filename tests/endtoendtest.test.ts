@@ -112,3 +112,27 @@ test("shows the guest wishlist behavior available on the storefront", async ({
     "(0)",
   );
 });
+
+test("navigates between category tabs and updates the page header", async ({
+  page,
+}) => {
+  const categories = [
+    { path: "/books", heading: "Books" },
+    { path: "/computers", heading: "Computers" },
+    { path: "/electronics", heading: "Electronics" },
+    { path: "/apparel-shoes", heading: "Apparel & Shoes" },
+    { path: "/digital-downloads", heading: "Digital downloads" },
+    { path: "/jewelry", heading: "Jewelry" },
+    { path: "/gift-cards", heading: "Gift Cards" },
+  ];
+
+  // Start at the store home page before using the primary category navigation.
+  await page.goto(storeUrl);
+
+  // Each navigation tab should open its category and update the page heading.
+  for (const category of categories) {
+    await page.locator(`.top-menu a[href="${category.path}"]`).click();
+    await expect(page).toHaveURL(`${storeUrl}${category.path}`);
+    await expect(page.locator("h1")).toHaveText(category.heading);
+  }
+});
