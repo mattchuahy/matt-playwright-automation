@@ -1,6 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 
 const storeUrl = "https://demowebshop.tricentis.com";
+const testAccount = {
+  email: `playwright-${randomUUID()}@example.com`,
+  password: "DemoShopTest!2026",
+};
 
 async function addProductToCart(
   page: Page,
@@ -111,4 +116,73 @@ test("shows the guest wishlist behavior available on the storefront", async ({
   await expect(page.locator(".ico-wishlist .wishlist-qty")).toContainText(
     "(0)",
   );
+});
+
+test("checks category page headers without checking the URL", async ({
+  page,
+}) => {
+  const categories = [
+    { path: "/books", heading: "Books" },
+    { path: "/computers", heading: "Computers" },
+    { path: "/electronics", heading: "Electronics" },
+    { path: "/apparel-shoes", heading: "Apparel & Shoes" },
+    { path: "/digital-downloads", heading: "Digital downloads" },
+    { path: "/jewelry", heading: "Jewelry" },
+    { path: "/gift-cards", heading: "Gift Cards" },
+  ];
+
+  // Use the category tabs and assert only the visible page heading.
+  await page.goto(storeUrl);
+  for (const category of categories) {
+    await page.locator(`.top-menu a[href="${category.path}"]`).click();
+    await expect(page.locator("h1")).toHaveText(category.heading);
+  }
+});
+
+test.describe.serial("customer account flows", () => {
+  test("registers a new account", async ({ page }) => {
+    // Create a unique customer account for the login test in this serial group.
+    await page.goto(`${storeUrl}/register`);
+    await page.locator("#gender-male").check();
+    await page.locator("#FirstName").fill("Playwright");
+    await page.locator("#LastName").fill("Test");
+    await page.locator("#Email").fill(testAccount.email);
+    await page.locator("#Password").fill(testAccount.password);
+    await page.locator("#ConfirmPassword").fill(testAccount.password);
+    await page.locator("#register-button").click();
+
+    // Confirm the storefront reports that registration completed successfully.
+    await expect(page.locator(".result")).toHaveText(
+      "Your registration completed",
+    );
+  });
+
+  test("logs in with the newly registered account", async ({ page }) => {
+    // Sign in with the account created by the previous test.
+    await page.goto(`${storeUrl}/login`);
+    await page.locator("#Email").fill(testAccount.email);
+    await page.locator("#Password").fill(testAccount.password);
+    await page.locator(".login-button").click();
+
+    // A successful login displays the customer email and logout link.
+    await expect(
+      page.getByRole("link", { name: testAccount.email, exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Log out", exact: true }),
+    ).toBeVisible();
+  });
+
+  test("rejects invalid login credentials", async ({ page }) => {
+    // Submit credentials that do not belong to a registered customer.
+    await page.goto(`${storeUrl}/login`);
+    await page.locator("#Email").fill(`invalid-${randomUUID()}@example.com`);
+    await page.locator("#Password").fill("DefinitelyWrong!2026");
+    await page.locator(".login-button").click();
+
+    // Verify the storefront explains that the login credentials are incorrect.
+    await expect(page.locator(".validation-summary-errors")).toContainText(
+      "No customer account found",
+    );
+  });
 });
